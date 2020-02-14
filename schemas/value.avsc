@@ -1,0 +1,69 @@
+{
+    "name": "WaitingTime",
+    "documentation": "Information on current and historical waiting times from all possible locations of the airport",
+    "namespace": "be.brusselsairport.dna.model.v1",
+    "type": "record",
+    "fields": [
+            {
+                "name": "mainLocation",
+                "documentation": "The name of the main location for which the waiting time was measured",
+                "type": "string"
+            },
+            {
+                "name": "subLocation",
+                "documentation": "The name of the sub location for which the waiting time was measured",
+                "type": [ "null", "string" ],
+                "default": null
+            },
+            {
+                "name": "startSegment",
+                "documentation": "Some locations are large and so are split up into segments",
+                "type": [ "null", "long" ],
+                "default": null
+            },
+            {
+                "name": "endSegment",
+                "documentation": "Some locations are large and so are split up into segments",
+                "type": [ "null", "long" ],
+                "default": null
+            },
+            {
+                "name": "startTime",
+                "documentation": "The start of the timeframe for which the waiting time is valid",
+                "type": {"type": "long", "logicalType": "timestamp-millis"}
+            },
+            {
+                "name": "endTime",
+                "documentation": "The end of the timeframe for which the waiting time is valid",
+                "type": {"type": "long", "logicalType": "timestamp-millis"}
+            },
+            {
+                "name": "deviceId",
+                "documentation": "The encrypted ID of the device being timed at the given location",
+                "type": "long"
+            },
+            {
+                "name": "laneType",
+                "documentation": "lane type (only for certain locations), e.g. staff, fast, normal",
+                "type": [ "null", "string" ],
+                "default": null
+            },
+            {
+                "name": "paxEntry",
+                "documentation": "?",
+                "type": [ "null", "string" ],
+                "default": null
+            },
+            {
+                "name": "euProperty",
+                "documentation": "?",
+                "type": [ "null", "string" ],
+                "default": null
+            },
+            {
+                "name": "waitingTimeSeconds",
+                "documentation": "Duration of the waiting time for the given device",
+                "type": "long"
+            }
+    ]
+}
