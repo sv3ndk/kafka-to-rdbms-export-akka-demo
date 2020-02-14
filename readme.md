@@ -24,6 +24,7 @@ The columns of the DB must be made of:
 * all field of the kafka key, prefixed with `kafka_key`
 * all fields of the value
 * `kafka_offset` and `kafka_partition
+* order of columns does not matter: inserts are done per key.
 
   
 ```
@@ -60,6 +61,6 @@ Execute the main function
 
 To be fixed:
 
-* Due to the way I build SQL queries with Slick, I only support records with exactly 20 fields
-* nested Avro schema are not yet supported
+* Due to the way I build SQL queries with Slick, I only support records with exactly 20 fields !
+* nested Avro schema are not yet supported (should be easy though)
 * only a subset of Avro primitive types are supported

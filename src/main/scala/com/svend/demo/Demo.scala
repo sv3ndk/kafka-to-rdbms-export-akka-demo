@@ -142,6 +142,7 @@ object AvroToolkit {
     new AvroToolkit(schema)
   }
 
+  // Avro field, with one value from the input Generic record
   trait Field[+T] {
     val value: T
     def asSqlParam(pp: PositionedParameters)
@@ -155,14 +156,14 @@ object AvroToolkit {
         case Schema.Type.LONG => LongField(record.get(fieldName).asInstanceOf[Long])
         case Schema.Type.INT => IntField(record.get(fieldName).asInstanceOf[Int])
         case Schema.Type.FLOAT => FloatField(record.get(fieldName).asInstanceOf[Float])
-        case Schema.Type.DOUBLE => DoubleField(record.get(fieldName).asInstanceOf[Float])
+        case Schema.Type.DOUBLE => DoubleField(record.get(fieldName).asInstanceOf[Double])
         case Schema.Type.BOOLEAN => BooleanField(record.get(fieldName).asInstanceOf[Boolean])
         case Schema.Type.STRING => StringField(Option(record.get(fieldName)).map(_.asInstanceOf[Utf8].toString).orNull)
 
         // quick hack: assuming all UNIONS are always structured as [null, actualType]
         case Schema.Type.UNION => this (fieldName, schema.getTypes.get(1), record)
 
-        // TODO: other cases + add support for nested avro here
+        // TODO: other types + add support for nested avro here
         }
     }
   }
@@ -198,7 +199,7 @@ object SqlUtil {
   def asSqlInsert(tableName: String)(values: Seq[(String, AvroToolkit.Field[Any])])(implicit slickSession: SlickSession):SqlAction[Int, NoStream, Effect] = {
       import slickSession.profile.api._
 
-      // TODO: stangely enough, I have no idea how to write this more elegantly nor without hardcoding the number of fields... :(
+      // TODO: strangely enough, I have no idea how to write this more elegantly nor without hardcoding the number of fields... :(
       sqlu"""
           INSERT INTO #$tableName (
           #${values(0)._1} ,
