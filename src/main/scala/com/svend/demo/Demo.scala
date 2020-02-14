@@ -154,6 +154,8 @@ object AvroToolkit {
 
         case Schema.Type.LONG => LongField(record.get(fieldName).asInstanceOf[Long])
         case Schema.Type.INT => IntField(record.get(fieldName).asInstanceOf[Int])
+        case Schema.Type.FLOAT => FloatField(record.get(fieldName).asInstanceOf[Float])
+        case Schema.Type.DOUBLE => DoubleField(record.get(fieldName).asInstanceOf[Float])
         case Schema.Type.BOOLEAN => BooleanField(record.get(fieldName).asInstanceOf[Boolean])
         case Schema.Type.STRING => StringField(Option(record.get(fieldName)).map(_.asInstanceOf[Utf8].toString).orNull)
 
@@ -171,6 +173,12 @@ object AvroToolkit {
   }
   case class IntField(value: Int) extends Field[Int] {
     override def asSqlParam(pp: PositionedParameters): Unit = pp.setInt(value)
+  }
+  case class FloatField(value: Float) extends Field[Float] {
+    override def asSqlParam(pp: PositionedParameters): Unit = pp.setFloat(value)
+  }
+  case class DoubleField(value: Double) extends Field[Double] {
+    override def asSqlParam(pp: PositionedParameters): Unit = pp.setDouble(value)
   }
   case class BooleanField(value: Boolean) extends Field[Boolean] {
     override def asSqlParam(pp: PositionedParameters): Unit = pp.setBoolean(value)
