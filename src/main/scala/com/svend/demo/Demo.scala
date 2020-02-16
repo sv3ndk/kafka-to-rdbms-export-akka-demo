@@ -26,12 +26,16 @@ import scala.util.{Failure, Success, Try}
 object Main extends App {
 
   implicit val system = ActorSystem("ingestion")
+  val appConfig = system.settings.config.getConfig("demo-app")
+  val kafkaConfig = appConfig.getConfig("kafka")
+  val dbConfig = appConfig.getConfig("db")
+  val inputTopic = kafkaConfig.getString("input-topic")
 
-  val inputTopic = "historical-waiting-times-v1"
+  implicit val dbSession = SlickSession.forConfig(dbConfig.getConfig("slick"))
 
   val rawKafkafRecords = Consumer.plainSource(
     ConsumerSettings(
-      system.settings.config.getConfig("akka.kafka.consumer"),
+      kafkaConfig.getConfig("akka-kafka-consumer"),
       new ByteArrayDeserializer,
       new ByteArrayDeserializer),
     Subscriptions.assignmentWithOffset(
@@ -42,16 +46,13 @@ object Main extends App {
     )
   )
 
-  val dbTableName = "historical_waiting_times"
-  implicit val dbSession = SlickSession.forConfig("slick-postgres")
-
   rawKafkafRecords
     .via(AvroFlattener.flow(
-      AvroToolkit("./schemas/key.avsc"),
-      AvroToolkit("./schemas/value.avsc")
+      AvroToolkit(kafkaConfig.getString("key-schema")),
+      AvroToolkit(kafkaConfig.getString("value-schema"))
     ))
 
-    .via(Slick.flow(SqlUtil.asSqlInsert(dbTableName)))
+    .via(Slick.flow(SqlUtil.asSqlInsert(dbConfig.getString("destination-table"))))
 //    .log("nr-of-updated-rows")
     .runForeach(println)
 
@@ -200,53 +201,21 @@ object SqlUtil {
       import slickSession.profile.api._
 
       // TODO: strangely enough, I have no idea how to write this more elegantly nor without hardcoding the number of fields... :(
-      sqlu"""
+
+      values.length match {
+        case 21 => sqlu"""
           INSERT INTO #$tableName (
-          #${values(0)._1} ,
-          #${values(1)._1},
-          #${values(2)._1},
-          #${values(3)._1},
-          #${values(4)._1},
-          #${values(5)._1},
-          #${values(6)._1},
-          #${values(7)._1},
-          #${values(8)._1},
-          #${values(9)._1},
-          #${values(10)._1},
-          #${values(11)._1},
-          #${values(12)._1},
-          #${values(13)._1},
-          #${values(14)._1},
-          #${values(15)._1},
-          #${values(16)._1},
-          #${values(17)._1},
-          #${values(18)._1},
-          #${values(19)._1},
+          #${values(0)._1} , #${values(1)._1}, #${values(2)._1}, #${values(3)._1}, #${values(4)._1}, #${values(5)._1}, #${values(6)._1}, #${values(7)._1}, #${values(8)._1}, #${values(9)._1},
+          #${values(10)._1}, #${values(11)._1}, #${values(12)._1}, #${values(13)._1}, #${values(14)._1}, #${values(15)._1}, #${values(16)._1}, #${values(17)._1}, #${values(18)._1}, #${values(19)._1},
           #${values(20)._1}
           )
           VALUES(
-          ${values(0)._2},
-          ${values(1)._2},
-          ${values(2)._2},
-          ${values(3)._2},
-          ${values(4)._2},
-          ${values(5)._2},
-          ${values(6)._2},
-          ${values(7)._2},
-          ${values(8)._2},
-          ${values(9)._2},
-          ${values(10)._2},
-          ${values(11)._2},
-          ${values(12)._2},
-          ${values(13)._2},
-          ${values(14)._2},
-          ${values(15)._2},
-          ${values(16)._2},
-          ${values(17)._2},
-          ${values(18)._2},
-          ${values(19)._2},
+          ${values(0)._2},${values(1)._2},${values(2)._2},${values(3)._2},${values(4)._2},${values(5)._2},${values(6)._2},${values(7)._2},${values(8)._2},${values(9)._2},
+          ${values(10)._2},${values(11)._2},${values(12)._2},${values(13)._2},${values(14)._2},${values(15)._2},${values(16)._2},${values(17)._2},${values(18)._2},${values(19)._2},
           ${values(20)._2}
           )"""
+      }
+
     }
 }
 
