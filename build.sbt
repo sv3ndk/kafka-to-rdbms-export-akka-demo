@@ -1,4 +1,4 @@
-name := "akka-quickstart-scala"
+name := "kafka-to-rdbms-export-akka-demo"
 
 version := "1.0"
 
