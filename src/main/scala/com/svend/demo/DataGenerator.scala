@@ -44,7 +44,7 @@ object DataGenerator {
   def onePizza(index: Int): Option[(Int, (PizzaId, Pizza))] = {
     Some((
       index+1,
-      (PizzaId(index), Pizza("Pandemic pizza", true, false, 27))
+      (PizzaId(index), Pizza("Pandemic pizza", true, false, 27, Person("Jean-Marc", "OfOven")))
     ))
   }
 

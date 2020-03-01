@@ -2,7 +2,7 @@
 
 This project illustrates an approach for exporting Avro records from Kafka to a DB. 
 
-The mechanism is agnostic of the actual Avro schema: the records are read as `GenericRecords` and the corresponding SQL `INSERT` statement is executed.
+The mechanism is agnostic of the actual Avro schema: the records are read as `GenericRecords` and the corresponding SQL `INSERT` statement is executed, mapping each avro field to a DB column. Nested Avro fields are simply prefixed with their parent name.
 
 The target DB table is assumed to already exist. 
 
@@ -47,7 +47,7 @@ create table pizzas (
 
     -- metadata added to enable restartability
     _kafka_offset bigint,
-    _kafka_offset int,
+    _kafka_partition int,
 
     -- kafka key fields are prefixed with kafka_key
     kafka_key_id int,
@@ -56,7 +56,11 @@ create table pizzas (
     name text,
     vegetarian boolean,
     vegan boolean,
-    calories int
+    calories int,
+
+    -- nested fields are prefixed with the parent name
+    chef_name text,
+    chef_firstname text
 
 );
 
@@ -80,6 +84,5 @@ sbt "runMain com.svend.demo.IngestDemo"
 
 To be fixed:
 
-* Due to the way I build SQL queries with Slick, I only support records with exactly 20 fields !
-* nested Avro schema are not yet supported (should be easy though)
-* only a subset of Avro primitive types are supported
+* Due to the way I build SQL queries with Slick, I only support records with exactly known number of fields :(
+* Not all Avro types are supported, though all primitives are there, + optional fields and nested records.
