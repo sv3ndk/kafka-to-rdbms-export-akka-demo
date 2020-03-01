@@ -40,6 +40,8 @@ The columns of the DB must be made of:
 * `_kafka_offset` and `_kafka_offset`
 * order of columns does not matter: inserts are done per key.
 
+For example, give our [DataModel.scala](src/main/scala/com/svend/demo/DataModel.scala), we have in DB:
+
 
 ```
 
