@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.2.5",
 
   "org.apache.avro" % "avro" % "1.8.2",
+  "com.sksamuel.avro4s" %% "avro4s-core" % "3.0.8",
 
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "org.scalatest" %% "scalatest" % "3.1.0" % Test

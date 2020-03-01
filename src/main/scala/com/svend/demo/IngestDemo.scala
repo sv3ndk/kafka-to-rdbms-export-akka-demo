@@ -8,10 +8,11 @@ import akka.kafka.scaladsl.Consumer
 import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.alpakka.slick.scaladsl._
 import akka.stream.scaladsl._
+import com.sksamuel.avro4s.{AvroSchema, RecordFormat, SchemaFor}
+import com.svend.demo.DataModel.{Pizza, PizzaId}
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
+import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{DatumReader, DecoderFactory}
-import org.apache.avro.specific.SpecificDatumReader
 import org.apache.avro.util.Utf8
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
@@ -25,7 +26,8 @@ import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
-object Main extends App {
+
+object IngestDemo extends App {
 
   implicit val system = ActorSystem("ingestion")
 
@@ -57,8 +59,9 @@ object Main extends App {
     )
 
     rawKafkafRecords
-      .via(AvroFlattener.flow(kafkaConfig.getString("key-schema"), kafkaConfig.getString("value-schema")))
+      .via(AvroFlattener.flow(AvroSchema[PizzaId], AvroSchema[Pizza]))
       .via(Slick.flow(SqlUtil.asSqlInsert(tableName)))
+      .log("error logging")
       .runWith(Sink.ignore)
   }
   }
@@ -75,11 +78,11 @@ object Main extends App {
  **/
 object AvroFlattener {
 
-  def flow(keySchemaPath: String, valueSchemaPath: String):
+  def flow(keySchema: Schema, valueSchema: Schema):
   Flow[ConsumerRecord[Array[Byte], Array[Byte]], Seq[(String, AvroToolkit.Field[Any])], NotUsed] = {
 
-    val keyToolkit = AvroToolkit(keySchemaPath)
-    val valueToolkit = AvroToolkit(valueSchemaPath)
+    val keyToolkit = new AvroToolkit(keySchema)
+    val valueToolkit = new AvroToolkit(valueSchema)
 
     Flow[ConsumerRecord[Array[Byte], Array[Byte]]]
 
@@ -121,7 +124,8 @@ object AvroFlattener {
  **/
 class AvroToolkit(val schema: Schema) {
 
-  val reader: DatumReader[GenericRecord] = new SpecificDatumReader[GenericRecord](schema)
+//  val reader: DatumReader[GenericRecord] = new SpecificDatumReader[GenericRecord](schema)
+  val reader: DatumReader[GenericRecord] = new GenericDatumReader[GenericRecord](schema)
 
   def deserialize(message: Array[Byte]): Try[GenericRecord] = {
     Try {
@@ -149,15 +153,9 @@ class AvroToolkit(val schema: Schema) {
 
 object AvroToolkit {
 
-  def apply(schemaFile: String) = {
-    val schema = new Schema.Parser().parse(io.Source.fromFile(schemaFile).getLines().mkString(""))
-    new AvroToolkit(schema)
-  }
-
   // Avro field, with one value from the input Generic record
   trait Field[+T] {
     val value: T
-
     def asSqlParam(pp: PositionedParameters)
   }
 
@@ -236,6 +234,14 @@ object SqlUtil {
     // TODO: strangely enough, I have no idea how to write this more elegantly nor without hardcoding the number of fields... :(
 
     values.length match {
+
+      case 7 =>
+        sqlu"""
+           INSERT INTO #$tableName
+          (#${values(0)._1} , #${values(1)._1}, #${values(2)._1}, #${values(3)._1}, #${values(4)._1}, #${values(5)._1}, #${values(6)._1})
+          VALUES(${values(0)._2},${values(1)._2},${values(2)._2},${values(3)._2},${values(4)._2},${values(5)._2},${values(6)._2})
+          """
+
       case 21 => sqlu"""
           INSERT INTO #$tableName (
           #${values(0)._1} , #${values(1)._1}, #${values(2)._1}, #${values(3)._1}, #${values(4)._1}, #${values(5)._1}, #${values(6)._1}, #${values(7)._1}, #${values(8)._1}, #${values(9)._1},
