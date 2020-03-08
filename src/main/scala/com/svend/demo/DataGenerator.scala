@@ -5,8 +5,11 @@ import akka.actor.ActorSystem
 import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.Producer
 import akka.stream.scaladsl.Source
+import com.sksamuel.avro4s.JsonFormat
+import com.sksamuel.avro4s.kafka.GenericSerde
 import org.apache.kafka.clients.producer.ProducerRecord
 import com.svend.demo.DataModel._
+
 import scala.concurrent.duration._
 
 /**
@@ -21,8 +24,8 @@ object DataGeneratorApp extends App {
 
   val kakaConfig = ProducerSettings(
     appConfig.getConfig("kafka-producer"),
-    new Avro4sSerdes[PizzaId](jsonFormat = true),
-    new Avro4sSerdes[Pizza](jsonFormat = true)
+    new GenericSerde[PizzaId](JsonFormat),
+    new GenericSerde[Pizza](JsonFormat)
   )
 
   println("Starting to generate hard-coded data")
